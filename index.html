@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>代码审计平台 · UI 原型</title>
+<style>
+/* ============ 全局变量与重置 ============ */
+:root{
+  --primary:#2468f2;--primary-dark:#1a4fc4;--primary-bg:#eaf1ff;
+  --success:#16a34a;--success-bg:#dcfce7;
+  --warn:#d97706;--warn-bg:#fef3c7;
+  --danger:#dc2626;--danger-bg:#fee2e2;
+  --info:#0891b2;--info-bg:#cffafe;
+  --gray:#64748b;--gray-bg:#f1f5f9;
+  --text:#1e293b;--text-light:#64748b;--text-lighter:#94a3b8;
+  --border:#e2e8f0;--border-dark:#cbd5e1;
+  --bg:#f8fafc;--card-bg:#fff;
+  --sidebar-w:220px;--topbar-h:56px;
+  --radius:8px;--radius-sm:4px;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-lg:0 4px 12px rgba(0,0,0,.08);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;font-size:14px;color:var(--text);background:var(--bg);line-height:1.5}
+a{color:var(--primary);text-decoration:none}
+a:hover{color:var(--primary-dark);text-decoration:underline}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+ul,ol{list-style:none}
+input,select,textarea{font-family:inherit;font-size:14px}
+
+/* ============ 布局 ============ */
+.app{display:flex;min-height:100vh}
+
+/* 侧边栏 */
+.sidebar{width:var(--sidebar-w);background:#0f172a;color:#cbd5e1;display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:100}
+.sidebar-logo{padding:0 18px;height:var(--topbar-h);display:flex;align-items:center;gap:8px;color:#fff;font-weight:600;font-size:15px;border-bottom:1px solid #1e293b}
+.sidebar-logo .dot{width:24px;height:24px;background:var(--primary);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px}
+.sidebar-nav{flex:1;padding:8px 0;overflow-y:auto}
+.sidebar-group-title{padding:12px 18px 4px;font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.5px}
+.sidebar-item{display:flex;align-items:center;gap:10px;padding:10px 18px;color:#cbd5e1;cursor:pointer;font-size:13.5px;border-left:3px solid transparent;transition:.15s}
+.sidebar-item:hover{background:#1e293b;color:#fff}
+.sidebar-item.active{background:#1e293b;color:#fff;border-left-color:var(--primary)}
+.sidebar-item .icon{width:18px;text-align:center;opacity:.85;font-size:15px}
+.sidebar-footer{padding:10px 18px;border-top:1px solid #1e293b;font-size:11px;color:#64748b}
+
+/* 主区 */
+.main{flex:1;margin-left:var(--sidebar-w);display:flex;flex-direction:column;min-height:100vh}
+.topbar{height:var(--topbar-h);background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;position:sticky;top:0;z-index:50;gap:16px}
+.topbar-breadcrumb{flex:1;display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-light)}
+.topbar-breadcrumb a{color:var(--text-light)}
+.topbar-breadcrumb .sep{color:var(--text-lighter)}
+.topbar-user{display:flex;align-items:center;gap:8px;cursor:pointer}
+.topbar-avatar{width:30px;height:30px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600}
+.content{padding:24px;flex:1}
+.page-title{font-size:20px;font-weight:600;margin-bottom:4px;color:var(--text)}
+.page-subtitle{color:var(--text-light);font-size:13px;margin-bottom:20px}
+
+/* ============ 通用组件 ============ */
+.card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--border);font-weight:600;display:flex;align-items:center;justify-content:between}
+.card-header .title{flex:1}
+.card-body{padding:18px}
+
+/* 按钮 */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:var(--radius-sm);font-size:13px;border:1px solid var(--border-dark);background:#fff;color:var(--text);transition:.15s;white-space:nowrap}
+.btn:hover{border-color:var(--primary);color:var(--primary)}
+.btn-primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-dark);color:#fff}
+.btn-sm{padding:3px 10px;font-size:12px}
+.btn-danger{color:var(--danger);border-color:var(--danger)}
+.btn-danger:hover{background:var(--danger);color:#fff}
+.btn-link{border:none;background:none;color:var(--primary);padding:2px 4px}
+.btn-link:hover{text-decoration:underline}
+
+/* 标签/徽章 */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:11.5px;font-weight:500;line-height:1.6}
+.badge-high{background:var(--danger-bg);color:var(--danger)}
+.badge-mid{background:var(--warn-bg);color:var(--warn)}
+.badge-low{background:var(--info-bg);color:var(--info)}
+.badge-success{background:var(--success-bg);color:var(--success)}
+.badge-warn{background:var(--warn-bg);color:var(--warn)}
+.badge-danger{background:var(--danger-bg);color:var(--danger)}
+.badge-gray{background:var(--gray-bg);color:var(--gray)}
+.badge-info{background:var(--primary-bg);color:var(--primary)}
+
+/* 状态点 */
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.dot-green{background:var(--success)}.dot-yellow{background:var(--warn)}.dot-red{background:var(--danger)}.dot-gray{background:var(--gray)}
+
+/* 表格 */
+.table{width:100%;border-collapse:collapse;font-size:13px}
+.table th{text-align:left;padding:10px 12px;background:var(--gray-bg);color:var(--text-light);font-weight:600;border-bottom:1px solid var(--border);white-space:nowrap}
+.table td{padding:11px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.table tr:hover td{background:#fafbfc}
+.table .link{color:var(--primary);cursor:pointer}
+.table .link:hover{text-decoration:underline}
+
+/* 表单 */
+.form-row{display:flex;align-items:center;margin-bottom:16px;gap:12px}
+.form-label{width:120px;text-align:right;color:var(--text-light);font-size:13px;flex-shrink:0}
+.form-label.required::after{content:"*";color:var(--danger);margin-left:3px}
+.input,.select,.textarea{flex:1;padding:7px 10px;border:1px solid var(--border-dark);border-radius:var(--radius-sm);font-size:13px;background:#fff}
+.input:focus,.select:focus,.textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-bg)}
+.textarea{min-height:72px;resize:vertical;font-family:inherit}
+.form-hint{color:var(--text-lighter);font-size:12px;margin-left:132px;margin-top:-10px;margin-bottom:14px}
+
+/* 筛选条 */
+.filter-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.filter-bar .input,.filter-bar .select{width:auto;min-width:140px}
+.filter-spacer{flex:1}
+
+/* 统计卡片 */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
+.stat-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow)}
+.stat-card .label{font-size:12px;color:var(--text-light);margin-bottom:6px}
+.stat-card .value{font-size:24px;font-weight:600;color:var(--text)}
+.stat-card .trend{font-size:12px;margin-top:4px}
+.stat-card .trend.up{color:var(--success)}.stat-card .trend.down{color:var(--danger)}
+
+/* 图表占位（用 div 模拟） */
+.chart-box{height:200px;display:flex;align-items:flex-end;justify-content:space-around;padding:10px 0;gap:4px;position:relative}
+.chart-bar{flex:1;background:var(--primary);border-radius:3px 3px 0 0;min-width:12px;position:relative;transition:.2s;cursor:pointer}
+.chart-bar:hover{opacity:.85}
+.chart-bar .label{position:absolute;bottom:-22px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--text-light);white-space:nowrap}
+.chart-bar .val{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--text-light);white-space:nowrap}
+
+/* 横向柱状图 */
+.hbar-chart{display:flex;flex-direction:column;gap:8px}
+.hbar-row{display:flex;align-items:center;gap:8px;font-size:12.5px}
+.hbar-row .name{width:100px;color:var(--text-light);text-align:right;flex-shrink:0}
+.hbar-row .track{flex:1;height:18px;background:var(--gray-bg);border-radius:3px;overflow:hidden}
+.hbar-row .fill{height:100%;border-radius:3px}
+.hbar-row .num{width:36px;text-align:right;font-weight:600;flex-shrink:0}
+
+/* 饼图（用 conic-gradient 模拟） */
+.pie{width:140px;height:140px;border-radius:50%;margin:0 auto}
+.pie-legend{display:flex;flex-direction:column;gap:6px;font-size:12px;margin-top:12px}
+.pie-legend .row{display:flex;align-items:center;gap:6px}
+.pie-legend .swatch{width:12px;height:12px;border-radius:2px}
+
+/* Tabs */
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:18px}
+.tab{padding:9px 16px;cursor:pointer;color:var(--text-light);font-size:13.5px;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab:hover{color:var(--primary)}
+.tab.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600}
+
+/* 抽屉 */
+.drawer-mask{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:none}
+.drawer-mask.show{display:block}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:560px;background:#fff;z-index:201;transform:translateX(100%);transition:.25s;display:flex;flex-direction:column;box-shadow:-4px 0 16px rgba(0,0,0,.1)}
+.drawer.show{transform:translateX(0)}
+.drawer-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:between}
+.drawer-header .title{flex:1;font-weight:600;font-size:15px}
+.drawer-close{font-size:20px;color:var(--gray);cursor:pointer;line-height:1}
+.drawer-body{flex:1;overflow-y:auto;padding:20px}
+.drawer-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+
+/* 分段控件（时间范围） */
+.seg{display:inline-flex;border:1px solid var(--border-dark);border-radius:var(--radius-sm);overflow:hidden}
+.seg button{padding:5px 14px;font-size:12.5px;color:var(--text-light);background:#fff;border:none;border-right:1px solid var(--border-dark)}
+.seg button:last-child{border-right:none}
+.seg button.active{background:var(--primary);color:#fff}
+
+/* 空状态 */
+.empty{text-align:center;padding:40px;color:var(--text-lighter);font-size:13px}
+
+/* 面包屑容器内的当前 */
+.breadcrumb-current{color:var(--text);font-weight:500}
+
+/* 代码块 */
+.code-block{background:#0f172a;color:#e2e8f0;padding:12px 14px;border-radius:6px;font-family:"SF Mono",Consolas,Menlo,monospace;font-size:12.5px;line-height:1.6;overflow-x:auto;white-space:pre}
+.code-block .ln{color:#64748b;margin-right:12px;user-select:none}
+.code-block .hl{background:rgba(220,38,38,.25);display:block;margin:0 -14px;padding:0 14px}
+.code-block .add{color:#4ade80}.code-block .del{color:#f87171}
+
+/* 复选框 */
+.checkbox{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:13px}
+.checkbox input{margin:0}
+
+/* 分页 */
+.pagination{display:flex;gap:4px;justify-content:flex-end;margin-top:14px;align-items:center;font-size:13px;color:var(--text-light)}
+.pagination button{padding:4px 10px;border:1px solid var(--border-dark);border-radius:var(--radius-sm);background:#fff;font-size:12.5px}
+.pagination button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.pagination button:disabled{color:var(--text-lighter);cursor:not-allowed}
+
+/* 详情字段网格 */
+.field-grid{display:grid;grid-template-columns:130px 1fr 130px 1fr;gap:10px 14px;font-size:13px}
+.field-grid .k{color:var(--text-light)}
+.field-grid .v{color:var(--text)}
+
+/* 登录页 */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%)}
+.login-box{width:380px;background:#fff;border-radius:12px;padding:36px;box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.login-title{text-align:center;font-size:20px;font-weight:600;margin-bottom:6px}
+.login-sub{text-align:center;color:var(--text-light);font-size:13px;margin-bottom:28px}
+.login-logo{width:48px;height:48px;background:var(--primary);border-radius:10px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;font-weight:700}
+.login-box .form-label{width:auto;display:block;text-align:left;margin-bottom:6px}
+.login-box .input{width:100%}
+
+/* 实用 */
+.flex{display:flex}.items-center{align-items:center}.gap-2{gap:8px}.gap-3{gap:12px}
+.mt-2{margin-top:8px}.mt-3{margin-top:12px}.mt-4{margin-top:16px}.mt-6{margin-top:24px}
+.mb-2{margin-bottom:8px}.mb-3{margin-bottom:12px}.mb-4{margin-bottom:16px}
+.text-sm{font-size:12.5px}.text-gray{color:var(--text-light)}.text-right{text-align:right}
+.font-mono{font-family:"SF Mono",Consolas,Menlo,monospace}
+.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:280px}
+.hidden{display:none}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.section-title{font-size:14px;font-weight:600;margin:18px 0 10px;color:var(--text)}
+hr.divider{border:none;border-top:1px solid var(--border);margin:16px 0}
+
+/* 提示框 */
+.alert{padding:10px 14px;border-radius:var(--radius-sm);font-size:13px;margin-bottom:14px;display:flex;gap:8px;align-items:flex-start}
+.alert-info{background:var(--primary-bg);color:var(--primary-dark)}
+.alert-warn{background:var(--warn-bg);color:var(--warn)}
+.alert-danger{background:var(--danger-bg);color:var(--danger)}
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<!-- 抽屉容器 -->
+<div class="drawer-mask" id="drawerMask" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header"><span class="title" id="drawerTitle">详情</span><span class="drawer-close" onclick="closeDrawer()">×</span></div>
+  <div class="drawer-body" id="drawerBody"></div>
+  <div class="drawer-footer" id="drawerFooter"></div>
+</div>
+
+<script>
+/* ============================================================
+   模拟数据
+   ============================================================ */
+const DB = {
+  currentUser: { id:'u1', name:'张明', email:'zhangming@demo.com', role:'系统管理员', avatar:'张' },
+
+  users: [
+    { id:'u1', name:'张明', email:'zhangming@demo.com', role:'系统管理员', status:'启用', lastLogin:'2026-08-14 09:12' },
+    { id:'u2', name:'李芳', email:'lifang@demo.com', role:'普通用户', status:'启用', lastLogin:'2026-08-13 17:40' },
+    { id:'u3', name:'王强', email:'wangqiang@demo.com', role:'普通用户', status:'启用', lastLogin:'2026-08-14 08:30' },
+    { id:'u4', name:'赵敏', email:'zhaomin@demo.com', role:'普通用户', status:'启用', lastLogin:'2026-08-12 14:22' },
+    { id:'u5', name:'陈杰', email:'chenjie@demo.com', role:'普通用户', status:'禁用', lastLogin:'2026-08-01 10:15' },
+  ],
+
+  projects: [
+    { id:'p1', name:'电商平台', desc:'核心电商业务系统', owner:'张明', ownerId:'u1', repoCount:3, taskCount7d:28, issueCount:{high:5,mid:12,low:23}, lastScan:'2026-08-14 08:30', status:'启用' },
+    { id:'p2', name:'支付网关', desc:'统一支付收单平台', owner:'李芳', ownerId:'u2', repoCount:2, taskCount7d:15, issueCount:{high:2,mid:6,low:14}, lastScan:'2026-08-13 22:10', status:'启用' },
+    { id:'p3', name:'数据中台', desc:'数据采集与治理', owner:'王强', ownerId:'u3', repoCount:4, taskCount7d:9, issueCount:{high:0,mid:3,low:8}, lastScan:'2026-08-13 16:00', status:'启用' },
+    { id:'p4', name:'营销活动', desc:'活动配置与投放', owner:'张明', ownerId:'u1', repoCount:2, taskCount7d:0, issueCount:{high:0,mid:0,low:0}, lastScan:'2026-08-10 11:20', status:'停用' },
+  ],
+
+  repos: [
+    { id:'r1', projectId:'p1', name:'电商-前端', type:'GitLab', url:'https://gitlab.demo.com/ec/frontend.git', branch:'main', owner:'张明', lastScan:'2026-08-14 08:30', issueCount:{high:3,mid:7,low:15}, status:'启用', maxFiles:500, scanPath:'/', llm:'系统默认(qwen3-coder-plus)' },
+    { id:'r2', projectId:'p1', name:'电商-后端', type:'GitLab', url:'https://gitlab.demo.com/ec/backend.git', branch:'main', owner:'李芳', lastScan:'2026-08-13 22:10', issueCount:{high:2,mid:5,low:8}, status:'启用', maxFiles:500, scanPath:'/', llm:'系统默认(qwen3-coder-plus)' },
+    { id:'r3', projectId:'p1', name:'电商-移动端', type:'GitHub', url:'https://github.com/demo/ec-mobile.git', branch:'main', owner:'王强', lastScan:'2026-08-12 10:00', issueCount:{high:0,mid:0,low:0}, status:'启用', maxFiles:300, scanPath:'src/', llm:'系统默认(qwen3-coder-plus)' },
+    { id:'r4', projectId:'p2', name:'支付-核心', type:'GitLab', url:'https://gitlab.demo.com/pay/core.git', branch:'main', owner:'李芳', lastScan:'2026-08-13 22:10', issueCount:{high:2,mid:4,low:9}, status:'启用', maxFiles:500, scanPath:'/', llm:'系统默认(qwen3-coder-plus)' },
+    { id:'r5', projectId:'p2', name:'支付-对账', type:'GitLab', url:'https://gitlab.demo.com/pay/reconcile.git', branch:'main', owner:'赵敏', lastScan:'2026-08-11 09:00', issueCount:{high:0,mid:2,low:5}, status:'启用', maxFiles:500, scanPath:'/', llm:'系统默认(qwen3-coder-plus)' },
+  ],
+
+  tasks: [
+    { id:'t1', repoId:'r2', repoName:'电商-后端', projectId:'p1', name:'电商-后端-diff-20260814', type:'Diff Review', source:'GIT', schedule:'一次性', status:'成功', progress:100, trigger:'王强', triggerWay:'Webhook', created:'2026-08-14 08:30', finished:'2026-08-14 08:42', duration:'12分10秒', issueCount:8, highCount:2 },
+    { id:'t2', repoId:'r1', repoName:'电商-前端', projectId:'p1', name:'电商-前端-full-20260814', type:'Full Scan', source:'GIT', schedule:'一次性', status:'成功', progress:100, trigger:'张明', triggerWay:'手动', created:'2026-08-14 07:00', finished:'2026-08-14 07:35', duration:'35分02秒', issueCount:15, highCount:3 },
+    { id:'t3', repoId:'r2', repoName:'电商-后端', projectId:'p1', name:'Corn-diff-20260813', type:'Corn Review', source:'GIT', schedule:'每日 02:00', status:'成功', progress:100, trigger:'定时器', triggerWay:'定时', created:'2026-08-13 02:00', finished:'2026-08-13 02:18', duration:'18分33秒', issueCount:6, highCount:1, cronMode:'diff' },
+    { id:'t4', repoId:'r4', repoName:'支付-核心', projectId:'p2', name:'支付-核心-commit-20260813', type:'Commit Review', source:'GIT', schedule:'一次性', status:'部分成功', progress:100, trigger:'李芳', triggerWay:'手动', created:'2026-08-13 21:50', finished:'2026-08-13 22:10', duration:'20分01秒', issueCount:11, highCount:2 },
+    { id:'t5', repoId:'r1', repoName:'电商-前端', projectId:'p1', name:'电商-前端-upload-20260813', type:'Upload Scan', source:'UPLOAD', schedule:'一次性', status:'成功', progress:100, trigger:'赵敏', triggerWay:'上传', created:'2026-08-13 15:00', finished:'2026-08-13 15:08', duration:'8分12秒', issueCount:4, highCount:0 },
+    { id:'t6', repoId:'r2', repoName:'电商-后端', projectId:'p1', name:'Corn-commit-20260812', type:'Corn Review', source:'GIT', schedule:'每日 06:00', status:'失败', progress:60, trigger:'定时器', triggerWay:'定时', created:'2026-08-12 06:00', finished:'2026-08-12 06:11', duration:'11分20秒', issueCount:0, highCount:0, error:'LLM_TIMEOUT: 模型调用超时', cronMode:'commit' },
+    { id:'t7', repoId:'r4', repoName:'支付-核心', projectId:'p2', name:'支付-核心-diff-20260812', type:'Diff Review', source:'GIT', schedule:'一次性', status:'已取消', progress:40, trigger:'李芳', triggerWay:'手动', created:'2026-08-12 10:00', finished:'2026-08-12 10:05', duration:'5分00秒', issueCount:0, highCount:0 },
+    { id:'t8', repoId:'r3', repoName:'电商-移动端', projectId:'p1', name:'电商-移动端-full-20260812', type:'Full Scan', source:'GIT', schedule:'一次性', status:'成功', progress:100, trigger:'王强', triggerWay:'手动', created:'2026-08-12 10:00', finished:'2026-08-12 10:22', duration:'22分15秒', issueCount:0, highCount:0 },
+    { id:'t9', repoId:'r5', repoName:'支付-对账', projectId:'p2', name:'支付-对账-corn-20260811', type:'Corn Review', source:'GIT', schedule:'每日 03:00', status:'成功', progress:100, trigger:'定时器', triggerWay:'定时', created:'2026-08-11 03:00', finished:'2026-08-11 03:14', duration:'14分08秒', issueCount:5, highCount:0, cronMode:'diff' },
+    { id:'t10', repoId:'r1', repoName:'电商-前端', projectId:'p1', name:'电商-前端-diff-20260810', type:'Diff Review', source:'GIT', schedule:'一次性', status:'执行中', progress:45, trigger:'张明', triggerWay:'手动', created:'2026-08-14 09:00', finished:'-', duration:'-', issueCount:0, highCount:0 },
+    { id:'t11', repoId:'r2', repoName:'电商-后端', projectId:'p1', name:'电商-后端-diff-20260810', type:'Diff Review', source:'GIT', schedule:'一次性', status:'排队中', progress:0, trigger:'Webhook', triggerWay:'Webhook', created:'2026-08-14 09:05', finished:'-', duration:'-', issueCount:0, highCount:0 },
+  ],
+
+  issues: [
+    { id:'i1', repoId:'r2', repoName:'电商-后端', projectId:'p1', rule:'SQL注入', file:'src/main/java/com/ec/order/OrderDao.java', startLine:128, endLine:135, severity:'High', status:'已确认', summary:'OrderDao.queryByUserId 使用字符串拼接构造SQL', firstSeen:'2026-08-10', lastSeen:'2026-08-14', occurrences:3, confidence:'高', taskId:'t1' },
+    { id:'i2', repoId:'r2', repoName:'电商-后端', projectId:'p1', rule:'空指针风险', file:'src/main/java/com/ec/pay/PayService.java', startLine:67, endLine:67, severity:'Mid', status:'修复中', summary:'PayService.refund 未校验 refundAmt 为 null', firstSeen:'2026-08-09', lastSeen:'2026-08-14', occurrences:2, confidence:'中', taskId:'t1' },
+    { id:'i3', repoId:'r1', repoName:'电商-前端', projectId:'p1', rule:'XSS漏洞', file:'src/views/order/detail.vue', startLine:42, endLine:45, severity:'High', status:'待处理', summary:'v-html 直接渲染用户输入的备注字段', firstSeen:'2026-08-14', lastSeen:'2026-08-14', occurrences:1, confidence:'高', taskId:'t2' },
+    { id:'i4', repoId:'r1', repoName:'电商-前端', projectId:'p1', rule:'硬编码密钥', file:'src/api/request.js', startLine:12, endLine:12, severity:'High', status:'已忽略', summary:'请求拦截器中硬编码 API Key', firstSeen:'2026-08-13', lastSeen:'2026-08-13', occurrences:1, confidence:'高', taskId:'t5', ignoreReason:'测试环境专用Key' },
+    { id:'i5', repoId:'r4', repoName:'支付-核心', projectId:'p2', rule:'反序列化风险', file:'src/main/java/com/pay/notify/NotifyHandler.java', startLine:89, endLine:95, severity:'High', status:'待处理', summary:'ObjectInputStream 反序列化未限制类型', firstSeen:'2026-08-13', lastSeen:'2026-08-13', occurrences:1, confidence:'高', taskId:'t4' },
+    { id:'i6', repoId:'r4', repoName:'支付-核心', projectId:'p2', rule:'日志泄露敏感信息', file:'src/main/java/com/pay/PayController.java', startLine:34, endLine:34, severity:'Mid', status:'已修复', summary:'日志打印完整银行卡号', firstSeen:'2026-08-10', lastSeen:'2026-08-13', occurrences:2, confidence:'中', taskId:'t4' },
+    { id:'i7', repoId:'r1', repoName:'电商-前端', projectId:'p1', rule:'未校验重定向', file:'src/utils/auth.js', startLine:55, endLine:60, severity:'Low', status:'待处理', summary:'OAuth 回调 redirect_uri 未做白名单校验', firstSeen:'2026-08-14', lastSeen:'2026-08-14', occurrences:1, confidence:'低', taskId:'t2' },
+    { id:'i8', repoId:'r5', repoName:'支付-对账', projectId:'p2', rule:'整数溢出', file:'src/main/java/com/reconcile/AmountCalc.java', startLine:23, endLine:25, severity:'Mid', status:'待处理', summary:'金额累加未使用 BigDecimal', firstSeen:'2026-08-11', lastSeen:'2026-08-11', occurrences:1, confidence:'中', taskId:'t9' },
+  ],
+
+  projectMembers: [
+    { projectId:'p1', userId:'u1', userName:'张明', permission:'EXECUTE', role:'所有者' },
+    { projectId:'p1', userId:'u2', userName:'李芳', permission:'EXECUTE', role:'管理员' },
+    { projectId:'p1', userId:'u3', userName:'王强', permission:'WRITE', role:'成员' },
+    { projectId:'p1', userId:'u4', userName:'赵敏', permission:'READ', role:'成员' },
+    { projectId:'p2', userId:'u2', userName:'李芳', permission:'EXECUTE', role:'所有者' },
+    { projectId:'p2', userId:'u4', userName:'赵敏', permission:'WRITE', role:'成员' },
+  ],
+
+  repoMembers: [
+    { repoId:'r2', userId:'u3', userName:'王强', permission:'EXECUTE', source:'仓库级覆盖' },
+    { repoId:'r2', userId:'u4', userName:'赵敏', permission:'READ', source:'仓库级覆盖' },
+  ],
+
+  llmConfigs: [
+    { id:'l1', provider:'阿里云百炼', model:'qwen3-coder-plus', endpoint:'https://dashscope.aliyuncs.com/compatible-mode/v1', isDefault:true, status:'启用', timeout:120, lastTest:'2026-08-14 08:00 · 成功' },
+    { id:'l2', provider:'OpenAI', model:'gpt-4o', endpoint:'https://api.openai.com/v1', isDefault:false, status:'启用', timeout:120, lastTest:'2026-08-13 10:00 · 成功' },
+    { id:'l3', provider:'DeepSeek', model:'deepseek-coder', endpoint:'https://api.deepseek.com/v1', isDefault:false, status:'禁用', timeout:60, lastTest:'2026-08-10 14:00 · 失败' },
+  ],
+
+  taskStats7d: { // 近7天任务状态分布
+    total: 52, success: 41, partial: 4, failed: 3, cancelled: 2, running: 2,
+    trend: [ // 按天
+      {date:'08-08', success:6, partial:1, failed:0, cancelled:0},
+      {date:'08-09', success:5, partial:0, failed:1, cancelled:0},
+      {date:'08-10', success:7, partial:0, failed:0, cancelled:1},
+      {date:'08-11', success:4, partial:1, failed:0, cancelled:0},
+      {date:'08-12', success:8, partial:0, failed:1, cancelled:0},
+      {date:'08-13', success:6, partial:2, failed:0, cancelled:1},
+      {date:'08-14', success:5, partial:0, failed:1, cancelled:0},
+    ],
+    byType: [{name:'Diff Review',n:18},{name:'Corn Review',n:14},{name:'Full Scan',n:9},{name:'Commit Review',n:7},{name:'Upload Scan',n:4}],
+    bySource: [{name:'Git 拉取',n:48},{name:'本地上传',n:4}],
+    avgDuration:'18分20秒', p95Duration:'42分15秒',
+    errorDist: [{type:'LLM_TIMEOUT',n:2},{type:'GIT_PREPARE',n:1}],
+  }
+};
+
+/* ============================================================
+   辅助函数
+   ============================================================ */
+const $ = (s,el=document)=>el.querySelector(s);
+const $$ = (s,el=document)=>[...el.querySelectorAll(s)];
+const go = (hash)=>{ location.hash = hash; };
+function severityBadge(s){ const m={High:'badge-high',Mid:'badge-mid',Low:'badge-low'}; return `<span class="badge ${m[s]||''}">${s==='High'?'高危':s==='Mid'?'中危':'低危'}</span>` }
+function statusBadge(s){
+  const m={'成功':'badge-success','部分成功':'badge-warn','失败':'badge-danger','已取消':'badge-gray','执行中':'badge-info','排队中':'badge-gray','待执行':'badge-gray'};
+  const dot={'成功':'dot-green','部分成功':'dot-yellow','失败':'dot-red','已取消':'dot-gray','执行中':'dot-green','排队中':'dot-gray','待执行':'dot-gray'};
+  return `<span class="badge ${m[s]||''}"><span class="dot ${dot[s]||''}" style="margin-right:5px"></span>${s}</span>`;
+}
+function issueStatusBadge(s){
+  const m={'待处理':'badge-gray','已确认':'badge-info','修复中':'badge-warn','已修复':'badge-info','已关闭':'badge-success','已忽略':'badge-gray'};
+  return `<span class="badge ${m[s]||''}">${s}</span>`;
+}
+function permBadge(p){ const m={EXECUTE:['badge-info','创建任务与执行'],WRITE:['badge-warn','写'],READ:['badge-gray','读']}; const [c,n]=m[p]||['badge-gray',p]; return `<span class="badge ${c}">${n}</span>` }
+function findProject(id){ return DB.projects.find(p=>p.id===id) }
+function findRepo(id){ return DB.repos.find(r=>r.id===id) }
+function reposOf(pid){ return DB.repos.filter(r=>r.projectId===pid) }
+function tasksOfRepo(rid){ return DB.tasks.filter(t=>t.repoId===rid) }
+function tasksOfProject(pid){ return DB.tasks.filter(t=>t.projectId===pid) }
+function issuesOfRepo(rid){ return DB.issues.filter(i=>i.repoId===rid) }
+function issuesOfProject(pid){ return DB.issues.filter(i=>i.projectId===pid) }
+
+/* 抽屉 */
+function openDrawer(title, bodyHtml, footerHtml=''){
+  $('#drawerTitle').textContent = title;
+  $('#drawerBody').innerHTML = bodyHtml;
+  $('#drawerFooter').innerHTML = footerHtml || '<button class="btn" onclick="closeDrawer()">关闭</button>';
+  $('#drawerMask').classList.add('show');
+  $('#drawer').classList.add('show');
+}
+function closeDrawer(){ $('#drawerMask').classList.remove('show'); $('#drawer').classList.remove('show') }
+
+/* 简易模拟弹窗 */
+function mockAlert(msg){ openDrawer('提示', `<div class="alert alert-info">${msg}</div><p class="text-gray text-sm mt-3">这是原型演示，实际操作不会保存。</p>`) }
+
+/* 分页渲染 */
+function pagination(total, page=1, perPage=10){
+  const pages = Math.ceil(total/perPage);
+  if(pages<=1) return '';
+  let h='<div class="pagination"><span>共 '+total+' 条</span>';
+  h+=`<button ${page<=1?'disabled':''}>上一页</button>`;
+  for(let i=1;i<=pages;i++) h+=`<button class="${i===page?'active':''}">${i}</button>`;
+  h+=`<button ${page>=pages?'disabled':''}>下一页</button>`;
+  h+='</div>';
+  return h;
+}
+
+/* ============================================================
+   布局骨架
+   ============================================================ */
+function layout(inner, crumbs=[]){
+  const navItems = [
+    {group:'总览', items:[
+      {hash:'#/dashboard', icon:'▣', label:'首页看板'},
+    ]},
+    {group:'业务', items:[
+      {hash:'#/projects', icon:'◫', label:'项目列表'},
+      {hash:'#/tasks', icon:'◐', label:'任务管理'},
+      {hash:'#/issues', icon:'⚠', label:'漏洞管理'},
+    ]},
+    {group:'系统', items:[
+      {hash:'#/users', icon:'☻', label:'用户管理'},
+      {hash:'#/settings', icon:'⚙', label:'基础设置'},
+    ]},
+  ];
+  let navHtml='';
+  for(const g of navItems){
+    navHtml += `<div class="sidebar-group-title">${g.group}</div>`;
+    for(const it of g.items){
+      navHtml += `<div class="sidebar-item" onclick="go('${it.hash}')"><span class="icon">${it.icon}</span>${it.label}</div>`;
+    }
+  }
+  let crumbHtml = crumbs.map((c,i)=>{
+    if(i===crumbs.length-1) return `<span class="breadcrumb-current">${c.label}</span>`;
+    return `<a onclick="go('${c.hash}')">${c.label}</a><span class="sep">/</span>`;
+  }).join('');
+  return `
+  <div class="app">
+    <aside class="sidebar">
+      <div class="sidebar-logo"><div class="dot">CR</div>代码审计平台</div>
+      <nav class="sidebar-nav">${navHtml}</nav>
+      <div class="sidebar-footer">v2.0 原型 · 模拟数据</div>
+    </aside>
+    <div class="main">
+      <header class="topbar">
+        <div class="topbar-breadcrumb">${crumbHtml}</div>
+        <div class="topbar-user" onclick="go('#/login')">
+          <div class="topbar-avatar">${DB.currentUser.avatar}</div>
+          <span class="text-sm">${DB.currentUser.name}</span>
+        </div>
+      </header>
+      <div class="content">${inner}</div>
+    </div>
+  </div>`;
+}
+
+/* 高亮当前菜单 */
+function highlightNav(hash){
+  setTimeout(()=>{
+    $$('.sidebar-item').forEach(el=>{
+      const onclick = el.getAttribute('onclick')||'';
+      if(onclick.includes("'"+hash+"'")) el.classList.add('active');
+      else el.classList.remove('active');
+    });
+  },0);
+}
+
+/* ============================================================
+   路由器
+   ============================================================ */
+function router(){
+  const hash = location.hash.slice(1) || '/dashboard';
+  const parts = hash.split('/').filter(Boolean); // 去掉空串
+  const root = parts[0]||'dashboard';
+  let html='';
+  switch(root){
+    case 'login': document.getElementById('app').innerHTML = pageLogin(); return;
+    case 'dashboard': html = pageDashboard(); break;
+    case 'projects':
+      if(parts[1] && parts[1]==='new'){ html=pageProjectNew(); break; }
+      if(parts[1]){ // /projects/:id
+        const pid=parts[1];
+        if(parts[2]==='settings'){ html=pageProjectSettings(pid); break; }
+        html=pageProjectDetail(pid); break;
+      }
+      html=pageProjectList(); break;
+    case 'repos':
+      if(parts[1]){
+        const rid=parts[1];
+        if(parts[2]==='settings'){ html=pageRepoSettings(rid); break; }
+        if(parts[2]==='new-task'){ html=pageTaskNew(rid); break; }
+        if(parts[2]==='upload'){ html=pageUpload(rid); break; }
+        html=pageRepoDetail(rid); break;
+      }
+      break;
+    case 'tasks':
+      if(parts[1]){ html=pageTaskDetail(parts[1]); break; }
+      html=pageTaskList(); break;
+    case 'issues':
+      if(parts[1]){ html=pageIssueDetail(parts[1]); break; }
+      html=pageIssueList(); break;
+    case 'users': html=pageUsers(); break;
+    case 'settings': html=pageSettings(); break;
+    default: html=pageDashboard();
+  }
+  document.getElementById('app').innerHTML = html;
+  highlightNav('#/'+root);
+  window.scrollTo(0,0);
+}
+window.addEventListener('hashchange', router);
+
+/* ============================================================
+   页面：登录
+   ============================================================ */
+function pageLogin(){
+  return `
+  <div class="login-wrap">
+    <div class="login-box">
+      <div class="login-logo">CR</div>
+      <div class="login-title">代码审计平台</div>
+      <div class="login-sub">Code Review Platform</div>
+      <div class="form-row" style="flex-direction:column;align-items:stretch;margin-bottom:14px">
+        <label class="form-label">用户名 / 邮箱</label>
+        <input class="input" value="zhangming@demo.com" placeholder="支持邮箱格式">
+      </div>
+      <div class="form-row" style="flex-direction:column;align-items:stretch;margin-bottom:18px">
+        <label class="form-label">密码</label>
+        <input class="input" type="password" value="password" placeholder="8-20位，含大小写字母和数字">
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:9px" onclick="go('#/dashboard')">登 录</button>
+      <div class="text-center text-gray text-sm mt-4">支持 SSO 单点登录 · 会话有效期 8 小时</div>
+      <div class="text-center mt-3"><a onclick="go('#/dashboard')">使用 SSO 登录 →</a></div>
+    </div>
+  </div>`;
+}
+
+/* ============================================================
+   页面：首页看板
+   ============================================================ */
+function pageDashboard(){
+  const totalRepo = DB.repos.length;
+  const totalTask = DB.taskStats7d.total;
+  const totalIssue = DB.projects.reduce((s,p)=>s+p.issueCount.high+p.issueCount.mid+p.issueCount.low,0);
+  const highIssue = DB.projects.reduce((s,p)=>s+p.issueCount.high,0);
+  const st = DB.taskStats7d;
+
+  // 趋势堆叠柱状图（取最大值归一）
+  const maxDay = Math.max(...st.trend.map(d=>d.success+d.partial+d.failed+d.cancelled));
+  const trendBars = st.trend.map(d=>{
+    const total=d.success+d.partial+d.failed+d.cancelled;
+    const h = total/maxDay*100;
+    return `<div style="display:flex;flex-direction:column;justify-content:flex-end;height:160px;flex:1;align-items:center">
+      <div style="width:60%;display:flex;flex-direction:column;border-radius:3px 3px 0 0;overflow:hidden;height:${h}%">
+        <div style="flex:${d.success};background:var(--success)"></div>
+        <div style="flex:${d.partial};background:var(--warn)"></div>
+        <div style="flex:${d.failed};background:var(--danger)"></div>
+        <div style="flex:${d.cancelled};background:var(--gray)"></div>
+      </div>
+      <div class="label" style="font-size:11px;color:var(--text-light);margin-top:6px">${d.date}</div>
+    </div>`;
+  }).join('');
+
+  // 饼图 conic-gradient
+  const pie = st;
+  const s1=pie.success,p2=pie.partial,p3=pie.failed,p4=pie.cancelled, totalPie=s1+p2+p3+p4;
+  const deg = v=> v/totalPie*360;
+  const cum=(arr)=>{let s=0;return arr.map(v=>s+=v)};
+  const [c1,c2,c3,c4]=cum([deg(s1),deg(p2),deg(p3),deg(p4)]);
+  const pieStyle = `background:conic-gradient(var(--success) 0 ${c1}deg, var(--warn) ${c1}deg ${c2}deg, var(--danger) ${c2}deg ${c3}deg, var(--gray) ${c3}deg 360deg)`;
+
+  // 类型分布横向柱状
+  const maxType = Math.max(...st.byType.map(t=>t.n));
+  const typeBars = st.byType.map(t=>{
+    const colors=['var(--primary)','var(--info)','var(--success)','var(--warn)','var(--gray)'];
+    return `<div class="hbar-row"><div class="name">${t.name}</div><div class="track"><div class="fill" style="width:${t.n/maxType*100}%;background:${colors[st.byType.indexOf(t)]}"></div></div><div class="num">${t.n}</div></div>`;
+  }).join('');
+
+  const latestTasks = DB.tasks.slice(0,6).map(t=>`
+    <tr>
+      <td><a class="link" onclick="go('#/tasks/${t.id}')">${t.name}</a></td>
+      <td><a class="link" onclick="go('#/repos/${t.repoId}')">${t.repoName}</a></td>
+      <td>${taskTypeBadge(t)}</td>
+      <td>${statusBadge(t.status)}</td>
+      <td>${t.issueCount?`发现 ${t.issueCount}`:'-'}</td>
+      <td class="text-gray text-sm">${t.created}</td>
+    </tr>`).join('');
+
+  return layout(`
+    <div class="page-title">首页看板</div>
+    <div class="page-subtitle">全局总览 · 跨所有项目的任务与漏洞概览</div>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="label">项目总数</div><div class="value">${DB.projects.length}</div><div class="trend">启用 ${DB.projects.filter(p=>p.status==='启用').length} · 停用 ${DB.projects.filter(p=>p.status==='停用').length}</div></div>
+      <div class="stat-card"><div class="label">代码仓库</div><div class="value">${totalRepo}</div><div class="trend up">近7天 ${totalTask} 个任务</div></div>
+      <div class="stat-card"><div class="label">漏洞总数</div><div class="value">${totalIssue}</div><div class="trend down">高危 ${highIssue} · 待处理 ${DB.issues.filter(i=>i.status==='待处理').length}</div></div>
+      <div class="stat-card"><div class="label">近7天任务成功率</div><div class="value">${Math.round(st.success/totalPie*100)}%</div><div class="trend">成功 ${st.success} / 失败 ${st.failed}</div></div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="section-title" style="margin:0">任务执行状态分布</div>
+      <div class="seg">
+        <button class="active" onclick="mockAlert('已切换到 近7天')">近7天</button>
+        <button onclick="mockAlert('已切换到 近30天')">近30天</button>
+        <button onclick="mockAlert('打开自定义时间范围选择')">自定义</button>
+      </div>
+    </div>
+
+    <div class="grid-3 mb-4">
+      <div class="card"><div class="card-header"><span class="title">终态状态分布</span></div><div class="card-body" style="display:flex;align-items:center;gap:16px">
+        <div class="pie" style="${pieStyle}"></div>
+        <div class="pie-legend" style="flex:1">
+          <div class="row"><span class="swatch" style="background:var(--success)"></span>成功 <b>${s1}</b> (${Math.round(s1/totalPie*100)}%)</div>
+          <div class="row"><span class="swatch" style="background:var(--warn)"></span>部分成功 <b>${p2}</b> (${Math.round(p2/totalPie*100)}%)</div>
+          <div class="row"><span class="swatch" style="background:var(--danger)"></span>失败 <b>${p3}</b> (${Math.round(p3/totalPie*100)}%)</div>
+          <div class="row"><span class="swatch" style="background:var(--gray)"></span>已取消 <b>${p4}</b> (${Math.round(p4/totalPie*100)}%)</div>
+          <div class="row" style="margin-top:6px;color:var(--text-light)">进行中 ${st.running}（未计入）</div>
+        </div>
+      </div></div>
+
+      <div class="card" style="grid-column:span 2"><div class="card-header"><span class="title">任务趋势（按天，堆叠）</span>
+        <span class="text-gray text-sm">成功/部分成功/失败/已取消</span></div>
+      <div class="card-body"><div style="display:flex;gap:8px">${trendBars}</div></div></div>
+    </div>
+
+    <div class="grid-2 mb-4">
+      <div class="card"><div class="card-header"><span class="title">按任务类型分布</span></div><div class="card-body"><div class="hbar-chart">${typeBars}</div></div></div>
+      <div class="card"><div class="card-header"><span class="title">耗时与失败</span></div><div class="card-body">
+        <div class="field-grid">
+          <div class="k">平均耗时</div><div class="v">${st.avgDuration}</div>
+          <div class="k">P95 耗时</div><div class="v">${st.p95Duration}</div>
+          <div class="k">失败原因</div><div class="v">${st.errorDist.map(e=>`${e.type} (${e.n})`).join('、')}</div>
+        </div>
+      </div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="title">最新任务</span><a class="btn-link" onclick="go('#/tasks')">查看全部 →</a></div>
+      <div class="card-body" style="padding:0">
+        <table class="table">
+          <thead><tr><th>任务名称</th><th>仓库</th><th>类型</th><th>状态</th><th>发现</th><th>创建时间</th></tr></thead>
+          <tbody>${latestTasks}</tbody>
+        </table>
+      </div>
+    </div>
+  `, [{hash:'#/dashboard',label:'首页'}]);
+}
+
+function taskTypeBadge(t){
+  const srcTag = t.source==='UPLOAD'?'<span class="badge badge-gray">本地上传</span>':'<span class="badge badge-info">Git</span>';
+  const cronTag = t.schedule && t.schedule!=='一次性' && t.type==='Corn Review' && t.cronMode ? `<span class="badge badge-warn">${t.cronMode}模式</span>` : '';
+  const schedTag = t.schedule!=='一次性'?`<span class="badge badge-info">${t.schedule}</span>`:'';
+  return `${srcTag} <span class="badge badge-gray">${t.type}</span> ${cronTag} ${schedTag}`;
+}
+
+/* ============================================================
+   页面：项目列表
+   ============================================================ */
+function pageProjectList(){
+  const rows = DB.projects.map(p=>{
+    const total = p.issueCount.high+p.issueCount.mid+p.issueCount.low;
+    return `<tr>
+      <td><a class="link" onclick="go('#/projects/${p.id}')">${p.name}</a></td>
+      <td class="text-gray text-sm truncate">${p.desc}</td>
+      <td>${p.owner}</td>
+      <td><a class="link" onclick="go('#/projects/${p.id}')">${p.repoCount}</a></td>
+      <td>
+        <span class="badge badge-high">${p.issueCount.high}</span>
+        <span class="badge badge-mid">${p.issueCount.mid}</span>
+        <span class="badge badge-low">${p.issueCount.low}</span>
+      </td>
+      <td class="text-sm">${p.lastScan}</td>
+      <td>${p.status==='启用'?'<span class="badge badge-success">启用</span>':'<span class="badge badge-gray">停用</span>'}</td>
+      <td class="text-right">
+        <button class="btn-link" onclick="go('#/projects/${p.id}/settings')">配置</button>
+        <button class="btn-link" onclick="go('#/projects/${p.id}')">详情</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  return layout(`
+    <div class="flex" style="justify-content:space-between;align-items:flex-start">
+      <div><div class="page-title">项目列表</div><div class="page-subtitle">管理所有审计项目 · 每个项目可包含多个代码仓库</div></div>
+      <button class="btn btn-primary" onclick="go('#/projects/new')">+ 新建项目</button>
+    </div>
+    <div class="card">
+      <div class="filter-bar">
+        <input class="input" placeholder="搜索项目名称或描述" style="min-width:240px">
+        <select class="select"><option>全部状态</option><option>启用</option><option>停用</option></select>
+        <select class="select"><option>所有团队</option></select>
+        <div class="filter-spacer"></div>
+      </div>
+      <table class="table">
+        <thead><tr><th>项目名称</th><th>描述</th><th>所有者</th><th>仓库</th><th>漏洞 (高/中/低)</th><th>最近扫描</th><th>状态</th><th class="text-right">操作</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      ${pagination(DB.projects.length,1,10)}
+    </div>
+  `, [{hash:'#/projects',label:'项目列表'}]);
+}
+
+/* ============================================================
+   页面：新建项目
+   ============================================================ */
+function pageProjectNew(){
+  return layout(`
+    <div class="page-title">新建项目</div><div class="page-subtitle">创建一个审计项目，随后可在其中添加代码仓库</div>
+    <div class="card" style="max-width:680px">
+      <div class="card-body">
+        <div class="form-row"><label class="form-label required">项目名称</label><input class="input" placeholder="3-50字符，全局唯一"></div>
+        <div class="form-row"><label class="form-label">项目描述</label><textarea class="textarea" placeholder="最多200字符"></textarea></div>
+        <div class="alert alert-info">创建后您将成为项目<b>所有者(owner)</b>，可在项目配置中添加管理员和成员。</div>
+      </div>
+      <div class="card-body" style="display:flex;justify-content:flex-end;gap:8px;border-top:1px solid var(--border)">
+        <button class="btn" onclick="go('#/projects')">取消</button>
+        <button class="btn btn-primary" onclick="mockAlert('项目已创建（模拟）');go('#/projects/p1')">创建项目</button>
+      </div>
+    </div>
+  `, [{hash:'#/projects',label:'项目列表'},{hash:'#/projects/new',label:'新建项目'}]);
+}
+
+/* ============================================================
+   页面：项目详情看板
+   ============================================================ */
+function pageProjectDetail(pid){
+  const p = findProject(pid);
+  if(!p) return layout('<div class="empty">项目不存在</div>',[{hash:'#/projects',label:'项目列表'}]);
+  const repos = reposOf(pid);
+  const issues = issuesOfProject(pid);
+  const total = issues.length;
+
+  const repoCards = repos.map(r=>{
+    return `<div class="card" style="cursor:pointer" onclick="go('#/repos/${r.id}')">
+      <div class="card-body">
+        <div class="flex items-center gap-2"><b>${r.name}</b>${r.status==='启用'?'<span class="badge badge-success">启用</span>':'<span class="badge badge-gray">停用</span>'}</div>
+        <div class="text-gray text-sm mt-2 truncate">${r.url}</div>
+        <div class="flex gap-2 mt-3">
+          <span class="badge badge-high">${r.issueCount.high}</span>
+          <span class="badge badge-mid">${r.issueCount.mid}</span>
+          <span class="badge badge-low">${r.issueCount.low}</span>
+          <span class="text-gray text-sm" style="margin-left:auto">${r.lastScan}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  return layout(`
+    <div class="flex" style="justify-content:space-between;align-items:flex-start">
+      <div><div class="page-title">${p.name}</div><div class="page-subtitle">${p.desc} · 所有者 ${p.owner}</div></div>
+      <div class="flex gap-2">
+        <button class="btn" onclick="go('#/projects/${pid}/settings')">管理配置</button>
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="label">代码仓库</div><div class="value">${repos.length}</div></div>
+      <div class="stat-card"><div class="label">漏洞总数</div><div class="value">${total}</div><div class="trend down">高危 ${p.issueCount.high}</div></div>
+      <div class="stat-card"><div class="label">近7天任务</div><div class="value">${p.taskCount7d}</div></div>
+      <div class="stat-card"><div class="label">最近扫描</div><div class="value" style="font-size:14px;line-height:2">${p.lastScan}</div></div>
+    </div>
+
+    <div class="grid-2 mb-4">
+      <div class="card"><div class="card-header"><span class="title">任务执行状态分布</span>
+        <div class="seg"><button class="active">近7天</button><button>近30天</button><button>自定义</button></div>
+      </div><div class="card-body">
+        <div style="display:flex;align-items:center;gap:16px">
+          <div class="pie" style="background:conic-gradient(var(--success) 0 230deg, var(--warn) 230deg 280deg, var(--danger) 280deg 320deg, var(--gray) 320deg 360deg)"></div>
+          <div class="pie-legend" style="flex:1">
+            <div class="row"><span class="swatch" style="background:var(--success)"></span>成功 <b>18</b></div>
+            <div class="row"><span class="swatch" style="background:var(--warn)"></span>部分成功 <b>4</b></div>
+            <div class="row"><span class="swatch" style="background:var(--danger)"></span>失败 <b>3</b></div>
+            <div class="row"><span class="swatch" style="background:var(--gray)"></span>已取消 <b>2</b></div>
+          </div>
+        </div>
+      </div></div>
+
+      <div class="card"><div class="card-header"><span class="title">漏洞严重级别分布</span></div>
+      <div class="card-body">
+        <div class="hbar-chart">
+          <div class="hbar-row"><div class="name">高危</div><div class="track"><div class="fill" style="width:${p.issueCount.high/Math.max(total,1)*100}%;background:var(--danger)"></div></div><div class="num">${p.issueCount.high}</div></div>
+          <div class="hbar-row"><div class="name">中危</div><div class="track"><div class="fill" style="width:${p.issueCount.mid/Math.max(total,1)*100}%;background:var(--warn)"></div></div><div class="num">${p.issueCount.mid}</div></div>
+          <div class="hbar-row"><div class="name">低危</div><div class="track"><div class="fill" style="width:${p.issueCount.low/Math.max(total,1)*100}%;background:var(--info)"></div></div><div class="num">${p.issueCount.low}</div></div>
+        </div>
+      </div></div>
+    </div>
+
+    <div class="section-title">仓库列表</div>
+    <div class="grid-3">${repoCards}</div>
+  `, [{hash:'#/projects',label:'项目列表'},{hash:'#/projects/'+pid,label:p.name}]);
+}
+
+/* ============================================================
+   页面：项目管理配置（成员权限/所有者转移）
+   ============================================================ */
+function pageProjectSettings(pid){
+  const p = findProject(pid);
+  const members = DB.projectMembers.filter(m=>m.projectId===pid);
+  const repos = reposOf(pid);
+
+  const memberRows = members.map(m=>{
+    return `<tr>
+      <td>${m.userName}</td>
+      <td>${m.role==='所有者'?'<span class="badge badge-info">所有者</span>':m.role==='管理员'?'<span class="badge badge-warn">管理员</span>':'<span class="badge badge-gray">成员</span>'}</td>
+      <td>${permBadge(m.permission)}</td>
+      <td class="text-gray text-sm">项目级</td>
+      <td class="text-right">
+        ${m.role==='所有者'?'<span class="text-gray text-sm">所有者不可编辑</span>':`<button class="btn-link" onclick="mockAlert('编辑 ${m.userName} 的权限')">编辑</button> <button class="btn-link" style="color:var(--danger)" onclick="mockAlert('移除 ${m.userName}')">移除</button>`}
+      </td>
+    </tr>`;
+  }).join('');
+
+  const repoRows = repos.map(r=>`<tr>
+    <td><a class="link" onclick="go('#/repos/${r.id}/settings')">${r.name}</a></td>
+    <td>${r.type}</td>
+    <td class="text-gray text-sm truncate">${r.url}</td>
+    <td>${r.owner}</td>
+    <td class="text-right"><button class="btn-link" onclick="go('#/repos/${r.id}/settings')">仓库权限</button></td>
+  </tr>`).join('');
+
+  return layout(`
+    <div class="page-title">${p.name} · 管理配置</div>
+    <div class="page-subtitle">项目基本信息、成员权限与所有权管理</div>
+
+    <div class="tabs">
+      <div class="tab active">基本信息</div>
+      <div class="tab" onclick="document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));this.classList.add('active');document.getElementById('tabBasic').classList.add('hidden');document.getElementById('tabMember').classList.remove('hidden')">成员权限</div>
+      <div class="tab" onclick="document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));this.classList.add('active');document.getElementById('tabBasic').classList.add('hidden');document.getElementById('tabRepo').classList.remove('hidden')">仓库</div>
+      <div class="tab" onclick="document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));this.classList.add('active');document.getElementById('tabBasic').classList.add('hidden');document.getElementById('tabDanger').classList.remove('hidden')">危险操作</div>
+    </div>
+
+    <div id="tabBasic">
+      <div class="card"><div class="card-body">
+        <div class="form-row"><label class="form-label required">项目名称</label><input class="input" value="${p.name}"></div>
+        <div class="form-row"><label class="form-label">项目描述</label><textarea class="textarea">${p.desc}</textarea></div>
+        <div class="form-row"><label class="form-label">所有者</label><div class="flex items-center gap-2"><div class="topbar-avatar" style="width:24px;height:24px;font-size:11px">${p.owner[0]}</div>${p.owner} <span class="text-gray text-sm">（可在"危险操作"中转移）</span></div></div>
+        <div class="form-row"><label class="form-label">状态</label><select class="select" style="width:160px"><option ${p.status==='启用'?'selected':''}>启用</option><option ${p.status==='停用'?'selected':''}>停用</option></select></div>
+      </div>
+      <div class="card-body" style="display:flex;justify-content:flex-end;gap:8px;border-top:1px solid var(--border)"><button class="btn">取消</button><button class="btn btn-primary" onclick="mockAlert('已保存（模拟）')">保存</button></div></div>
+    </div>
+
+    <div id="tabMember" class="hidden">
+      <div class="card">
+        <div class="card-header"><span class="title">项目成员 (${members.length})</span>
+          <button class="btn btn-primary btn-sm" onclick="mockAlert('打开添加成员对话框')">+ 添加成员</button></div>
+        <table class="table">
+          <thead><tr><th>用户</th><th>身份</th><th>权限</th><th>来源</th><th class="text-right">操作</th></tr></thead>
+          <tbody>${memberRows}</tbody>
+        </table>
+      </div>
+      <div class="alert alert-info mt-3">
+        <b>权限说明：</b>三档权限递进 —— 读(READ) / 写(WRITE，含编辑配置) / 创建任务与执行(EXECUTE，含扫描与漏洞流转)。
+        仓库默认<b>继承</b>项目权限；仓库单独设置后对该用户<b>覆盖</b>项目级。
+      </div>
+    </div>
+
+    <div id="tabRepo" class="hidden">
+      <div class="card">
+        <div class="card-header"><span class="title">项目下的代码仓库 (${repos.length})</span>
+          <button class="btn btn-primary btn-sm" onclick="mockAlert('打开新建仓库对话框')">+ 添加仓库</button></div>
+        <table class="table">
+          <thead><tr><th>仓库名称</th><th>类型</th><th>URL</th><th>仓库所有者</th><th class="text-right">操作</th></tr></thead>
+          <tbody>${repoRows}</tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="tabDanger" class="hidden">
+      <div class="card"><div class="card-header" style="color:var(--danger)">⚠ 危险操作</div><div class="card-body">
+        <div class="section-title">转移项目所有权</div>
+        <div class="form-row"><label class="form-label">新所有者</label>
+          <select class="select" style="width:220px">${members.filter(m=>m.role!=='所有者').map(m=>`<option>${m.userName}</option>`).join('')}</select>
+          <button class="btn" onclick="mockAlert('所有权将转移，您会降为管理员')">转移所有权</button></div>
+        <div class="text-gray text-sm">转移后您将自动成为<b>管理员</b>，不再拥有所有权。</div>
+        <hr class="divider">
+        <div class="section-title" style="color:var(--danger)">删除项目</div>
+        <div class="flex items-center gap-2"><button class="btn btn-danger" onclick="mockAlert('项目将软删除，保留30天后清理')">删除项目</button><span class="text-gray text-sm">软删除，数据保留30天后自动清理</span></div>
+      </div></div>
+    </div>
+  `, [{hash:'#/projects',label:'项目列表'},{hash:'#/projects/'+pid,label:p.name},{hash:'#/projects/'+pid+'/settings',label:'管理配置'}]);
+}
+
+/* ============================================================
+   页面：仓库详情（Tab: 任务/报告/漏洞/配置）
+   ============================================================ */
+function pageRepoDetail(rid){
+  const r = findRepo(rid);
+  const p = findProject(r.projectId);
+  const tasks = tasksOfRepo(rid);
+  const issues = issuesOfRepo(rid);
+  const tab = (location.hash.split('/')[3]||'tasks');
+
+  const taskRows = tasks.map(t=>`<tr>
+    <td><a class="link" onclick="go('#/tasks/${t.id}')">${t.name}</a></td>
+    <td>${taskTypeBadge(t)}</td>
+    <td>${statusBadge(t.status)}</td>
+    <td>${t.progress===100?'100%':t.progress+'%'}</td>
+    <td>${t.trigger}</td>
+    <td>${t.triggerWay}</td>
+    <td class="text-gray text-sm">${t.created}</td>
+    <td class="text-right">
+      ${t.status==='成功'||t.status==='部分成功'?`<button class="btn-link" onclick="go('#/tasks/${t.id}')">报告</button>`:''}
+      ${t.status==='执行中'||t.status==='排队中'?`<button class="btn-link" onclick="mockAlert('已取消')">取消</button>`:''}
+      ${t.status==='失败'?`<button class="btn-link" onclick="mockAlert('重试任务')">重试</button>`:''}
+    </td>
+  </tr>`).join('');
+
+  const reportRows = tasks.filter(t=>t.status==='成功'||t.status==='部分成功').map(t=>`<tr>
+    <td><a class="link" onclick="go('#/tasks/${t.id}')">${t.name}</a></td>
+    <td>${taskTypeBadge(t)}</td>
+    <td>${t.created}</td>
+    <td><span class="badge badge-high">${t.highCount}</span> <span class="text-gray text-sm">共 ${t.issueCount}</span></td>
+    <td class="text-right"><button class="btn-link" onclick="go('#/tasks/${t.id}')">查看</button> <button class="btn-link" onclick="mockAlert('导出 PDF')">PDF</button> <button class="btn-link" onclick="mockAlert('导出 CSV')">CSV</button></td>
+  </tr>`).join('');
+
+  const issueRows = issues.map(i=>`<tr>
+    <td>${severityBadge(i.severity)}</td>
+    <td><a class="link" onclick="go('#/issues/${i.id}')">${i.rule}</a></td>
+    <td class="font-mono text-sm truncate" title="${i.file}">${i.file}</td>
+    <td class="text-sm">${i.startLine}-${i.endLine}</td>
+    <td class="truncate">${i.summary}</td>
+    <td>${issueStatusBadge(i.status)}</td>
+    <td class="text-gray text-sm">${i.lastSeen}</td>
+    <td class="text-right"><button class="btn-link" onclick="go('#/issues/${i.id}')">详情</button></td>
+  </tr>`).join('');
+
+  const tabs = [
+    {key:'tasks',label:'任务列表',n:tasks.length},
+    {key:'reports',label:'报告',n:tasks.filter(t=>t.status==='成功'||t.status==='部分成功').length},
+    {key:'issues',label:'漏洞',n:issues.length},
+    {key:'config',label:'仓库配置'},
+  ].map(t=>`<div class="tab ${tab===t.key?'active':''}" onclick="go('#/repos/${rid}/${t.key==='config'?'settings':(t.key==='tasks'?'':'')}${rid}');document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));this.classList.add('active')">${t.label}${t.n!=null?` (${t.n})`:''}</div>`).join('');
+
+  let body='';
+  if(tab==='tasks'||!tab){
+    body = `<div class="filter-bar">
+      <select class="select"><option>全部类型</option><option>Diff Review</option><option>Commit Review</option><option>Full Scan</option><option>Corn Review</option><option>Upload Scan</option></select>
+      <select class="select"><option>全部来源</option><option>Git 拉取</option><option>本地上传</option></select>
+      <select class="select"><option>全部状态</option><option>成功</option><option>部分成功</option><option>失败</option><option>已取消</option><option>执行中</option><option>排队中</option></select>
+      <input class="input" placeholder="任务名称" style="min-width:180px">
+      <div class="filter-spacer"></div>
+      <button class="btn btn-primary" onclick="go('#/repos/${rid}/new-task')">+ 新建任务</button>
+      <button class="btn" onclick="go('#/repos/${rid}/upload')">↑ 本地上传</button>
+    </div>
+    <table class="table"><thead><tr><th>任务名称</th><th>类型/来源</th><th>状态</th><th>进度</th><th>触发人</th><th>方式</th><th>创建时间</th><th class="text-right">操作</th></tr></thead><tbody>${taskRows||'<tr><td colspan=8 class=empty>暂无任务</td></tr>'}</tbody></table>`;
+  } else if(tab==='reports'){
+    body = `<table class="table"><thead><tr><th>报告</th><th>类型</th><th>生成时间</th><th>漏洞</th><th class="text-right">操作</th></tr></thead><tbody>${reportRows||'<tr><td colspan=5 class=empty>暂无报告</td></tr>'}</tbody></table>`;
+  } else if(tab==='issues'){
+    body = `<div class="filter-bar">
+      <select class="select"><option>全部级别</option><option>高危</option><option>中危</option><option>低危</option></select>
+      <select class="select"><option>全部状态</option><option>待处理</option><option>已确认</option><option>修复中</option><option>已修复</option><option>已关闭</option><option>已忽略</option></select>
+      <input class="input" placeholder="文件路径/规则/摘要" style="min-width:220px">
+      <div class="filter-spacer"></div>
+      <button class="btn">批量确认</button><button class="btn">批量忽略</button><button class="btn">导出CSV</button>
+    </div>
+    <table class="table"><thead><tr><th><input type="checkbox"></th><th>级别</th><th>规则</th><th>文件</th><th>行号</th><th>摘要</th><th>状态</th><th>最近发现</th><th class="text-right">操作</th></tr></thead><tbody>${issueRows||'<tr><td colspan=9 class=empty>暂无漏洞</td></tr>'}</tbody></table>`;
+  } else {
+    body = `<div class="card"><div class="card-body">
+      <div class="form-row"><label class="form-label">仓库名称</label><input class="input" value="${r.name}"></div>
+      <div class="form-row"><label class="form-label">仓库类型</label><select class="select" style="width:160px"><option>${r.type}</option><option>GitHub</option><option>GitLab</option><option>通用Git</option></select></div>
+      <div class="form-row"><label class="form-label">仓库URL</label><input class="input" value="${r.url}"></div>
+      <div class="form-row"><label class="form-label">默认分支</label><input class="input" value="${r.branch}" style="width:160px"></div>
+      <div class="form-row"><label class="form-label">认证方式</label><select class="select" style="width:200px"><option>Access Token</option><option>用户名+密码</option><option>SSH私钥</option></select> <button class="btn">测试连接</button></div>
+      <hr class="divider">
+      <div class="section-title">扫描参数</div>
+      <div class="form-row"><label class="form-label">LLM配置</label><input class="input" value="${r.llm}" style="width:280px"></div>
+      <div class="form-row"><label class="form-label">最大文件数</label><input class="input" value="${r.maxFiles}" style="width:120px"></div>
+      <div class="form-row"><label class="form-label">扫描路径</label><input class="input" value="${r.scanPath}"></div>
+    </div><div class="card-body" style="display:flex;justify-content:space-between;border-top:1px solid var(--border)">
+      <button class="btn" onclick="go('#/repos/${rid}/settings')">仓库成员权限 →</button>
+      <div class="flex gap-2"><button class="btn">取消</button><button class="btn btn-primary" onclick="mockAlert('已保存')">保存</button></div>
+    </div></div>`;
+  }
+
+  return layout(`
+    <div class="flex" style="justify-content:space-between;align-items:flex-start">
+      <div><div class="page-title">${r.name}</div><div class="page-subtitle">${p.name} · ${r.type} · ${r.url}</div></div>
+      <div class="flex gap-2">
+        <button class="btn" onclick="go('#/repos/${rid}/settings')">管理配置</button>
+        <button class="btn btn-primary" onclick="go('#/repos/${rid}/new-task')">+ 新建任务</button>
+      </div>
+    </div>
+    <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="stat-card"><div class="label">任务总数</div><div class="value">${tasks.length}</div></div>
+      <div class="stat-card"><div class="label">漏洞(高)</div><div class="value" style="color:var(--danger)">${r.issueCount.high}</div></div>
+      <div class="stat-card"><div class="label">漏洞(中/低)</div><div class="value">${r.issueCount.mid+r.issueCount.low}</div></div>
+      <div class="stat-card"><div class="label">最近扫描</div><div class="value" style="font-size:13px;line-height:2">${r.lastScan}</div></div>
+    </div>
+    <div class="tabs">${tabs}</div>
+    ${body}
+  `, [{hash:'#/projects',label:'项目列表'},{hash:'#/projects/'+p.id,label:p.name},{hash:'#/repos/'+rid,label:r.name}]);
+}
+
+/* ============================================================
+   页面：仓库管理配置（仓库级成员权限覆盖）
+   ============================================================ */
+function pageRepoSettings(rid){
+  const r = findRepo(rid);
+  const p = findProject(r.projectId);
+  const projMembers = DB.projectMembers.filter(m=>m.projectId===p.id);
+  const repoOverrides = DB.repoMembers.filter(m=>m.repoId===rid);
+
+  // 展示：项目继承的成员 + 仓库级覆盖
+  const rows = projMembers.map(pm=>{
+    const ov = repoOverrides.find(om=>om.userId===pm.userId);
+    const perm = ov?ov.permission:pm.permission;
+    const source = ov?'仓库级覆盖':'继承项目';
+    return `<tr>
+      <td>${pm.userName}</td>
+      <td>${pm.role==='所有者'?'<span class="badge badge-info">项目所有者</span>':pm.role==='管理员'?'<span class="badge badge-warn">项目管理员</span>':'<span class="badge badge-gray">项目成员</span>'}</td>
+      <td>${permBadge(perm)}</td>
+      <td>${ov?'<span class="badge badge-warn">'+source+'</span>':'<span class="text-gray text-sm">'+source+'</span>'}</td>
+      <td class="text-right"><button class="btn-link" onclick="mockAlert('单独设置 ${pm.userName} 的仓库权限（覆盖项目级）')">${ov?'修改':'单独设置'}</button>${ov?`<button class="btn-link" style="color:var(--danger)" onclick="mockAlert('清除覆盖，恢复继承项目权限')">恢复继承</button>`:''}</td>
+    </tr>`;
+  }).join('');
+
+  return layout(`
+    <div class="page-title">${r.name} · 管理配置</div>
+    <div class="page-subtitle">仓库级成员权限 · 默认继承项目权限，单独设置后对该用户覆盖</div>
+
+    <div class="tabs"><div class="tab" onclick="go('#/repos/${rid}/tasks')">任务列表</div><div class="tab active">成员权限</div></div>
+
+    <div class="alert alert-info">
+      <b>权限继承规则：</b>仓库默认继承所属项目<b>${p.name}</b>的用户权限。
+      对某用户单独设置后，<b>仅该用户</b>以仓库级权限为准（覆盖）；其他未被单独设置的用户<b>继续继承</b>项目权限。
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="title">成员权限 (${projMembers.length})</span>
+        <button class="btn btn-primary btn-sm" onclick="mockAlert('添加仓库级成员（会覆盖其项目权限）')">+ 添加仓库成员</button></div>
+      <table class="table">
+        <thead><tr><th>用户</th><th>项目身份</th><th>本仓库最终权限</th><th>权限来源</th><th class="text-right">操作</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+
+    <div class="card mt-4"><div class="card-header"><span class="title">仓库所有权</span></div><div class="card-body">
+      <div class="form-row"><label class="form-label">仓库所有者</label>
+        <select class="select" style="width:200px"><option>${r.owner}</option>${projMembers.filter(m=>m.userName!==r.owner).map(m=>`<option>${m.userName}</option>`).join('')}</select>
+        <button class="btn" onclick="mockAlert('转移仓库所有权')">转移所有权</button></div>
+    </div></div>
+  `, [{hash:'#/projects',label:'项目列表'},{hash:'#/projects/'+p.id,label:p.name},{hash:'#/repos/'+rid,label:r.name},{hash:'#/repos/'+rid+'/settings',label:'管理配置'}]);
+}
+
+/* ============================================================
+   页面：新建任务
+   ============================================================ */
+function pageTaskNew(rid){
+  const r = findRepo(rid); const p=findProject(r.projectId);
+  return layout(`
+    <div class="page-title">新建任务 · ${r.name}</div><div class="page-subtitle">选择任务类型并配置参数</div>
+    <div class="card" style="max-width:720px"><div class="card-body">
+      <div class="form-row"><label class="form-label required">任务类型</label>
+        <select class="select" id="taskType" onchange="toggleTaskForm()">
+          <option value="diff">Diff Review — 两个分支间的差异</option>
+          <option value="commit">Commit Review — 指定commit（最多10个）</option>
+          <option value="full">Full Scan — 全量扫描</option>
+          <option value="corn">Corn Review — 定时扫描</option>
+        </select>
+      </div>
+      <div id="f-diff">
+        <div class="form-row"><label class="form-label required">源分支 From</label><input class="input" placeholder="如 develop" style="width:240px"></div>
+        <div class="form-row"><label class="form-label required">目标分支 To</label><input class="input" value="main" style="width:240px"></div>
+      </div>
+      <div id="f-commit" class="hidden">
+        <div class="form-row"><label class="form-label required">Commit IDs</label><textarea class="textarea" placeholder="多个用逗号分隔，最多10个"></textarea></div>
+      </div>
+      <div id="f-full" class="hidden">
+        <div class="form-row"><label class="form-label">扫描路径</label><input class="input" value="/" style="width:240px"></div>
+        <div class="form-row"><label class="form-label">分支</label><input class="input" value="main" style="width:240px"></div>
+      </div>
+      <div id="f-corn" class="hidden">
+        <div class="form-row"><label class="form-label required">定时表达式</label><input class="input" value="0 2 * * *" style="width:200px"><span class="text-gray text-sm">每日 02:00</span></div>
+        <div class="form-row"><label class="form-label required">获取模式</label>
+          <select class="select" style="width:240px"><option value="diff">diff 模式 — 与上次扫描点比较</option><option value="commit">commit 模式 — 扫描新增commit</option></select>
+        </div>
+        <div class="alert alert-warn">Corn Review 为<b>周期任务</b>，会按计划持续执行；其他类型为一次性。</div>
+      </div>
+      <hr class="divider">
+      <div class="form-row"><label class="form-label">LLM配置</label><input class="input" value="${r.llm}" style="width:300px"></div>
+      <div class="form-row"><label class="form-label">优先级</label><select class="select" style="width:140px"><option>普通</option><option>高</option></select></div>
+    </div>
+    <div class="card-body" style="display:flex;justify-content:flex-end;gap:8px;border-top:1px solid var(--border)">
+      <button class="btn" onclick="go('#/repos/${rid}')">取消</button>
+      <button class="btn btn-primary" onclick="mockAlert('任务已创建，进入队列（模拟）');go('#/repos/${rid}')">创建任务</button>
+    </div></div>
+    <script>
+      function toggleTaskForm(){
+        const v=document.getElementById('taskType').value;
+        ['diff','commit','full','corn'].forEach(k=>{const el=document.getElementById('f-'+k); if(el) el.classList.toggle('hidden', k!==v)});
+      }
+    <\/script>
+  `, [{hash:'#/projects',label:'项目列表'},{hash:'#/projects/'+p.id,label:p.name},{hash:'#/repos/'+rid,label:r.name},{hash:'#/repos/'+rid+'/new-task',label:'新建任务'}]);
+}
+
+/* ============================================================
+   页面：本地上传
+   ============================================================ */
+function pageUpload(rid){
+  const r=findRepo(rid); const p=findProject(r.projectId);
+  return layout(`
+    <div class="page-title">本地上传扫描 · ${r.name}</div>
+    <div class="page-subtitle">上传代码目录或压缩包，作为该仓库的一次性扫描（无周期）</div>
+    <div class="card" style="max-width:640px"><div class="card-body">
+      <div class="alert alert-info">本地上传任务在任务列表中标记为 <b>本地上传</b>，与 Git 拉取任务区分；不创建周期。</div>
+      <div style="border:2px dashed var(--border-dark);border-radius:8px;padding:40px;text-align:center;margin:16px 0">
+        <div style="font-size:36px;color:var(--gray)">↑</div>
+        <div class="mt-2">点击或拖拽文件到此处上传</div>
+        <div class="text-gray text-sm mt-2">支持 .zip / .tar.gz / 目录，单文件最大 500MB</div>
+        <button class="btn btn-primary mt-3" onclick="mockAlert('选择文件（模拟）')">选择文件</button>
+      </div>
+      <div class="alert alert-warn"><b>安全检查：</b>上传后将执行杀毒、防路径穿越、防压缩炸弹检查，通过后进入隔离区解压。</div>
+    </div>
+    <div class="card-body" style="display:flex;justify-content:flex-end;gap:8px;border-top:1px solid var(--border)">
+      <button class="btn" onclick="go('#/repos/${rid}')">取消</button>
+      <button class="btn btn-primary" onclick="mockAlert('上传完成，开始扫描（模拟）');go('#/repos/${rid}')">开始扫描</button>
+    </div></div>
+  `, [{hash:'#/projects',label:'项目列表'},{hash:'#/projects/'+p.id,label:p.name},{hash:'#/repos/'+rid,label:r.name},{hash:'#/repos/'+rid+'/upload',label:'本地上传'}]);
+}
+
+/* ============================================================
+   页面：任务详情 / 报告查看
+   ============================================================ */
+function pageTaskDetail(tid){
+  const t = DB.tasks.find(x=>x.id===tid);
+  const r = findRepo(t.repoId); const p=findProject(t.projectId);
+  const findings = DB.issues.filter(i=>i.taskId===tid);
+
+  const findingRows = findings.map(i=>`<tr>
+    <td>${severityBadge(i.severity)}</td>
+    <td><a class="link" onclick="go('#/issues/${i.id}')">${i.rule}</a></td>
+    <td class="font-mono text-sm">${i.file}</td>
+    <td>${i.startLine}</td>
+    <td class="truncate">${i.summary}</td>
+    <td>${issueStatusBadge(i.status)}</td>
+    <td class="text-right"><button class="btn-link" onclick="go('#/issues/${i.id}')">详情</button></td>
+  </tr>`).join('');
+
+  return layout(`
+    <div class="flex" style="justify-content:space-between;align-items:flex-start">
+      <div><div class="page-title">${t.name}</div><div class="page-subtitle">${t.type} · ${statusBadge(t.status)} · ${t.created}</div></div>
+      <div class="flex gap-2">
+        <button class="btn" onclick="mockAlert('导出 PDF')">导出PDF</button>
+        <button class="btn" onclick="mockAlert('导出 CSV')">导出CSV</button>
+        ${t.status==='失败'?'<button class="btn btn-primary" onclick="mockAlert(\'重试\')">重试</button>':''}
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="label">问题总数</div><div class="value">${t.issueCount||0}</div></div>
+      <div class="stat-card"><div class="label">高危</div><div class="value" style="color:var(--danger)">${t.highCount||0}</div></div>
+      <div class="stat-card"><div class="label">耗时</div><div class="value" style="font-size:18px">${t.duration}</div></div>
+      <div class="stat-card"><div class="label">Token消耗</div><div class="value" style="font-size:16px">${t.status==='成功'?'128,540':'UNKNOWN'}</div></div>
+    </div>
+
+    <div class="grid-2 mb-4">
+      <div class="card"><div class="card-header"><span class="title">任务信息</span></div><div class="card-body">
+        <div class="field-grid">
+          <div class="k">任务ID</div><div class="v font-mono">${t.id}</div>
+          <div class="k">仓库</div><div class="v"><a class="link" onclick="go('#/repos/${r.id}')">${t.repoName}</a></div>
+          <div class="k">类型</div><div class="v">${taskTypeBadge(t)}</div>
+          <div class="k">触发人</div><div class="v">${t.trigger}（${t.triggerWay}）</div>
+          <div class="k">创建时间</div><div class="v">${t.created}</div>
+          <div class="k">完成时间</div><div class="v">${t.finished}</div>
+          <div class="k">进度</div><div class="v">${t.progress}%</div>
+        </div>
+      </div></div>
+      <div class="card"><div class="card-header"><span class="title">文件覆盖</span></div><div class="card-body">
+        <div class="field-grid">
+          <div class="k">计划文件</div><div class="v">45</div>
+          <div class="k">已审查</div><div class="v">42</div>
+          <div class="k">跳过</div><div class="v">2</div>
+          <div class="k">失败</div><div class="v">1</div>
+          <div class="k">规则数</div><div class="v">应用 24 / 触发 8</div>
+          <div class="k">OCR版本</div><div class="v font-mono">v1.7.17</div>
+        </div>
+      </div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="title">问题列表 (${findings.length})</span></div>
+      <div class="card-body" style="padding:0">
+        <table class="table">
+          <thead><tr><th>级别</th><th>规则</th><th>文件</th><th>行号</th><th>摘要</th><th>状态</th><th class="text-right">操作</th></tr></thead>
+          <tbody>${findingRows||'<tr><td colspan=7 class=empty>无问题发现</td></tr>'}</tbody>
+        </table>
+      </div>
+    </div>
+    ${t.error?`<div class="alert alert-danger mt-4"><b>失败原因：</b>${t.error}</div>`:''}
+  `, [{hash:'#/tasks',label:'任务管理'},{hash:'#/tasks/'+tid,label:t.name}]);
+}
+
+/* ============================================================
+   页面：任务管理（全局任务列表）
+   ============================================================ */
+function pageTaskList(){
+  const rows = DB.tasks.map(t=>`<tr>
+    <td><a class="link" onclick="go('#/tasks/${t.id}')">${t.name}</a></td>
+    <td><a class="link" onclick="go('#/repos/${t.repoId}')">${t.repoName}</a></td>
+    <td>${taskTypeBadge(t)}</td>
+    <td>${statusBadge(t.status)}</td>
+    <td>${t.progress===100?'100%':t.progress+'%'}</td>
+    <td>${t.trigger}</td>
+    <td class="text-gray text-sm">${t.created}</td>
+    <td>${t.duration}</td>
+    <td>${t.issueCount?`<span class="badge badge-high">${t.highCount}</span>/${t.issueCount}`:'-'}</td>
+    <td class="text-right">
+      <button class="btn-link" onclick="go('#/tasks/${t.id}')">详情</button>
+      ${t.status==='执行中'||t.status==='排队中'?'<button class="btn-link" onclick="mockAlert(\'取消任务\')">取消</button>':''}
+      ${t.status==='失败'?'<button class="btn-link" onclick="mockAlert(\'重试\')">重试</button>':''}
+    </td>
+  </tr>`).join('');
+
+  return layout(`
+    <div class="flex" style="justify-content:space-between;align-items:flex-start">
+      <div><div class="page-title">任务管理</div><div class="page-subtitle">所有项目的全部扫描任务</div></div>
+    </div>
+    <div class="card">
+      <div class="filter-bar">
+        <select class="select"><option>全部项目</option>${DB.projects.map(p=>`<option>${p.name}</option>`).join('')}</select>
+        <select class="select"><option>全部仓库</option></select>
+        <select class="select"><option>全部类型</option><option>Diff Review</option><option>Commit Review</option><option>Full Scan</option><option>Corn Review</option><option>Upload Scan</option></select>
+        <select class="select"><option>全部来源</option><option>Git 拉取</option><option>本地上传</option></select>
+        <select class="select"><option>全部状态</option><option>成功</option><option>部分成功</option><option>失败</option><option>已取消</option><option>执行中</option><option>排队中</option></select>
+        <input class="input" type="date">
+        <input class="input" type="date">
+        <div class="filter-spacer"></div>
+      </div>
+      <table class="table">
+        <thead><tr><th>任务名称</th><th>仓库</th><th>类型/来源</th><th>状态</th><th>进度</th><th>触发人</th><th>创建时间</th><th>耗时</th><th>漏洞</th><th class="text-right">操作</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      ${pagination(DB.tasks.length,1,10)}
+    </div>
+  `, [{hash:'#/tasks',label:'任务管理'}]);
+}
+
+/* ============================================================
+   页面：漏洞列表（全局）
+   ============================================================ */
+function pageIssueList(){
+  const rows = DB.issues.map(i=>`<tr>
+    <td><input type="checkbox"></td>
+    <td>${severityBadge(i.severity)}</td>
+    <td><a class="link" onclick="go('#/issues/${i.id}')">${i.rule}</a></td>
+    <td><a class="link" onclick="go('#/repos/${i.repoId}')">${i.repoName}</a></td>
+    <td class="font-mono text-sm truncate" title="${i.file}">${i.file}</td>
+    <td>${i.startLine}-${i.endLine}</td>
+    <td class="truncate">${i.summary}</td>
+    <td>${issueStatusBadge(i.status)}</td>
+    <td class="text-gray text-sm">${i.lastSeen}</td>
+    <td>${i.occurrences}</td>
+    <td class="text-right"><button class="btn-link" onclick="go('#/issues/${i.id}')">详情</button></td>
+  </tr>`).join('');
+
+  return layout(`
+    <div class="page-title">漏洞管理</div>
+    <div class="page-subtitle">所有仓库的漏洞汇总 · 按仓库跨任务合并</div>
+    <div class="card">
+      <div class="filter-bar">
+        <select class="select"><option>全部项目</option></select>
+        <select class="select"><option>全部仓库</option></select>
+        <select class="select"><option>全部级别</option><option>高危</option><option>中危</option><option>低危</option></select>
+        <select class="select"><option>全部状态</option><option>待处理</option><option>已确认</option><option>修复中</option><option>已修复</option><option>已关闭</option><option>已忽略</option></select>
+        <input class="input" placeholder="文件/规则/摘要" style="min-width:200px">
+        <div class="filter-spacer"></div>
+        <button class="btn">批量确认</button><button class="btn">批量忽略</button><button class="btn">导出CSV</button>
+      </div>
+      <table class="table">
+        <thead><tr><th><input type="checkbox"></th><th>级别</th><th>规则</th><th>仓库</th><th>文件</th><th>行号</th><th>摘要</th><th>状态</th><th>最近发现</th><th>出现次数</th><th class="text-right">操作</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      ${pagination(DB.issues.length,1,10)}
+    </div>
+  `, [{hash:'#/issues',label:'漏洞管理'}]);
+}
+
+/* ============================================================
+   页面：漏洞详情
+   ============================================================ */
+function pageIssueDetail(iid){
+  const i = DB.issues.find(x=>x.id===iid);
+  const r = findRepo(i.repoId); const p=findProject(i.projectId);
+  const t = DB.tasks.find(x=>x.id===i.taskId);
+
+  const codeLines = [
+    {n:120,c:'public List<Order> queryByUserId(String userId) {'},
+    {n:121,c:'    Connection conn = null;'},
+    {n:122,c:'    Statement stmt = null;'},
+    {n:123,c:'    try {'},
+    {n:124,c:'        conn = dataSource.getConnection();'},
+    {n:125,c:'        stmt = conn.createStatement();'},
+    {n:126,c:'        // 危险：字符串拼接构造SQL',hl:true},
+    {n:127,c:'        String sql = "SELECT * FROM orders WHERE user_id = \'\' + userId + \'\'"',hl:true},
+    {n:128,c:'        ResultSet rs = stmt.executeQuery(sql);',hl:true},
+    {n:129,c:'        return mapOrders(rs);'},
+    {n:130,c:'    } finally {'},
+  ];
+  const codeHtml = codeLines.map(l=>`<span class="ln">${l.n}</span>${l.hl?'<span class="hl">':''}${l.c}${l.hl?'</span>':''}\n`).join('');
+
+  return layout(`
+    <div class="flex" style="justify-content:space-between;align-items:flex-start">
+      <div><div class="page-title">${i.rule} · ${i.summary}</div>
+      <div class="page-subtitle">${severityBadge(i.severity)} ${issueStatusBadge(i.status)} · ${r.name} · 首次发现 ${i.firstSeen} · 最近 ${i.lastSeen} · 出现 ${i.occurrences} 次</div></div>
+      <div class="flex gap-2">
+        ${i.status==='待处理'?'<button class="btn btn-primary btn-sm" onclick="mockAlert(\'已确认\')">确认问题</button><button class="btn btn-sm" onclick="mockAlert(\'标记误报\')">标记误报</button>':''}
+        ${i.status==='已确认'?'<button class="btn btn-primary btn-sm" onclick="mockAlert(\'开始修复\')">开始修复</button>':''}
+        <button class="btn btn-sm" onclick="mockAlert('忽略问题（需填原因）')">忽略</button>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card"><div class="card-header"><span class="title">问题信息</span></div><div class="card-body">
+        <div class="field-grid" style="grid-template-columns:110px 1fr">
+          <div class="k">规则ID</div><div class="v font-mono">R-SQL-INJECTION-001</div>
+          <div class="k">规则类型</div><div class="v">${i.rule}</div>
+          <div class="k">严重级别</div><div class="v">${severityBadge(i.severity)}</div>
+          <div class="k">置信度</div><div class="v">${i.confidence}</div>
+          <div class="k">所属仓库</div><div class="v"><a class="link" onclick="go('#/repos/${r.id}')">${r.name}</a></div>
+          <div class="k">所属项目</div><div class="v">${p.name}</div>
+          <div class="k">文件路径</div><div class="v font-mono text-sm">${i.file}</div>
+          <div class="k">行号</div><div class="v">${i.startLine}-${i.endLine}</div>
+          <div class="k">发现任务</div><div class="v"><a class="link" onclick="go('#/tasks/${i.taskId}')">${t?t.name:'-'}</a></div>
+        </div>
+      </div></div>
+
+      <div class="card"><div class="card-header"><span class="title">AI 反馈与修复建议</span></div><div class="card-body">
+        <div class="section-title">问题描述</div>
+        <p class="text-sm">该接口直接将用户传入的 <code>userId</code> 拼接到 SQL 语句中，攻击者可通过构造恶意输入绕过查询条件甚至执行任意 SQL，导致订单数据泄露或篡改。</p>
+        <div class="section-title">修复建议 <span class="badge badge-info">置信度 ${i.confidence}</span></div>
+        <div class="code-block"><span class="ln">127</span><span class="add">+   String sql = "SELECT * FROM orders WHERE user_id = ?";</span>
+<span class="ln">128</span><span class="add">+   PreparedStatement ps = conn.prepareStatement(sql);</span>
+<span class="ln">129</span><span class="add">+   ps.setString(1, userId);</span>
+<span class="ln">130</span><span class="add">+   ResultSet rs = ps.executeQuery();</span></div>
+        <button class="btn btn-sm mt-3">复制修复代码</button>
+      </div></div>
+    </div>
+
+    <div class="card mt-4"><div class="card-header"><span class="title">代码上下文（前后各10行，问题行高亮）</span></div><div class="card-body">
+      <div class="code-block">${codeHtml}</div>
+      <div class="flex gap-2 mt-3"><button class="btn btn-sm">复制代码片段</button><button class="btn btn-sm">在新标签打开文件</button></div>
+    </div></div>
+
+    <div class="card mt-4"><div class="card-header"><span class="title">操作历史</span></div>
+      <table class="table"><thead><tr><th>时间</th><th>操作</th><th>操作人</th><th>备注</th></tr></thead>
+      <tbody>
+        <tr><td class="text-sm">${i.firstSeen} 14:22</td><td>首次发现</td><td>系统（OCR）</td><td class="text-gray">任务 ${i.taskId}</td></tr>
+        ${i.status!=='待处理'?`<tr><td class="text-sm">2026-08-13 09:00</td><td>确认问题</td><td>王强</td><td>已确认为真实漏洞</td></tr>`:''}
+        ${i.status==='已忽略'?`<tr><td class="text-sm">${i.lastSeen}</td><td>标记忽略</td><td>赵敏</td><td>原因：${i.ignoreReason||'-'}</td></tr>`:''}
+      </tbody></table>
+    </div>
+  `, [{hash:'#/issues',label:'漏洞管理'},{hash:'#/issues/'+iid,label:i.rule}]);
+}
+
+/* ============================================================
+   页面：用户管理
+   ============================================================ */
+function pageUsers(){
+  const rows = DB.users.map(u=>`<tr>
+    <td><div class="flex items-center gap-2"><div class="topbar-avatar" style="width:28px;height:28px;font-size:11px">${u.name[0]}</div><div><div>${u.name}</div><div class="text-gray text-sm">${u.email}</div></div></div></td>
+    <td>${u.role==='系统管理员'?'<span class="badge badge-info">系统管理员</span>':'<span class="badge badge-gray">普通用户</span>'}</td>
+    <td>${u.status==='启用'?'<span class="badge badge-success">启用</span>':'<span class="badge badge-danger">禁用</span>'}</td>
+    <td class="text-gray text-sm">${u.lastLogin}</td>
+    <td class="text-right">
+      <button class="btn-link" onclick="mockAlert('编辑 ${u.name}')">编辑</button>
+      <button class="btn-link" onclick="mockAlert('重置密码')">重置密码</button>
+      ${u.status==='启用'?`<button class="btn-link" style="color:var(--danger)" onclick="mockAlert('禁用用户')">禁用</button>`:`<button class="btn-link" onclick="mockAlert('启用用户')">启用</button>`}
+    </td>
+  </tr>`).join('');
+
+  return layout(`
+    <div class="flex" style="justify-content:space-between;align-items:flex-start">
+      <div><div class="page-title">用户管理</div><div class="page-subtitle">管理平台用户与系统管理员角色</div></div>
+      <button class="btn btn-primary" onclick="mockAlert('打开新建用户')">+ 新建用户</button>
+    </div>
+    <div class="card">
+      <div class="filter-bar">
+        <input class="input" placeholder="用户名/邮箱" style="min-width:200px">
+        <select class="select"><option>全部角色</option><option>系统管理员</option><option>普通用户</option></select>
+        <select class="select"><option>全部状态</option><option>启用</option><option>禁用</option></select>
+        <div class="filter-spacer"></div>
+      </div>
+      <table class="table">
+        <thead><tr><th>用户</th><th>角色</th><th>状态</th><th>最近登录</th><th class="text-right">操作</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div class="alert alert-info mt-3"><b>角色说明：</b>系统管理员是全局超管（管理用户/系统配置/所有项目）；其他权限均在<b>项目级</b>和<b>仓库级</b>按用户授权。</div>
+  `, [{hash:'#/users',label:'用户管理'}]);
+}
+
+/* ============================================================
+   页面：基础设置
+   ============================================================ */
+function pageSettings(){
+  const llmRows = DB.llmConfigs.map(l=>`<tr>
+    <td>${l.isDefault?'<span class="badge badge-info">默认</span> '+l.provider:l.provider}</td>
+    <td>${l.model}</td>
+    <td class="font-mono text-sm truncate">${l.endpoint}</td>
+    <td>${l.timeout}s</td>
+    <td>${l.status==='启用'?'<span class="badge badge-success">启用</span>':'<span class="badge badge-gray">禁用</span>'}</td>
+    <td class="text-gray text-sm">${l.lastTest}</td>
+    <td class="text-right">
+      <button class="btn-link" onclick="mockAlert('测试 ${l.provider} 连接')">测试</button>
+      <button class="btn-link" onclick="mockAlert('编辑')">编辑</button>
+      ${l.isDefault?'':`<button class="btn-link" onclick="mockAlert('设为默认')">设为默认</button>`}
+    </td>
+  </tr>`).join('');
+
+  return layout(`
+    <div class="page-title">基础设置</div><div class="page-subtitle">系统级配置 · LLM 提供商、全局规则、Token 配额</div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="showSetTab('llm')">LLM 配置</div>
+      <div class="tab" onclick="showSetTab('rule')">全局规则</div>
+      <div class="tab" onclick="showSetTab('token')">Token 配额</div>
+      <div class="tab" onclick="showSetTab('sys')">系统参数</div>
+    </div>
+
+    <div id="set-llm">
+      <div class="card">
+        <div class="card-header"><span class="title">LLM 提供商 (${DB.llmConfigs.length})</span>
+          <button class="btn btn-primary btn-sm" onclick="mockAlert('添加 LLM 提供商')">+ 添加提供商</button></div>
+        <table class="table">
+          <thead><tr><th>提供商</th><th>模型</th><th>端点</th><th>超时</th><th>状态</th><th>最近测试</th><th class="text-right">操作</th></tr></thead>
+          <tbody>${llmRows}</tbody>
+        </table>
+      </div>
+      <div class="alert alert-info mt-3"><b>Token 计量说明：</b>第一阶段直接读取 OCR 原生任务级 Token 汇总，平台用执行配置快照补充供应商/模型信息；平台自身生成报告的用量<b>单独统计</b>。</div>
+    </div>
+
+    <div id="set-rule" class="hidden"><div class="card"><div class="card-body">
+      <div class="section-title">全局规则集</div>
+      <table class="table"><thead><tr><th>规则</th><th>类别</th><th>严重级别</th><th>状态</th><th class="text-right">操作</th></tr></thead>
+        <tbody>
+          <tr><td>SQL注入检测</td><td>注入</td><td>${severityBadge('High')}</td><td><span class="badge badge-success">启用</span></td><td class="text-right"><button class="btn-link">编辑</button></td></tr>
+          <tr><td>XSS漏洞检测</td><td>注入</td><td>${severityBadge('High')}</td><td><span class="badge badge-success">启用</span></td><td class="text-right"><button class="btn-link">编辑</button></td></tr>
+          <tr><td>硬编码密钥</td><td>配置</td><td>${severityBadge('High')}</td><td><span class="badge badge-success">启用</span></td><td class="text-right"><button class="btn-link">编辑</button></td></tr>
+          <tr><td>空指针风险</td><td>可靠性</td><td>${severityBadge('Mid')}</td><td><span class="badge badge-success">启用</span></td><td class="text-right"><button class="btn-link">编辑</button></td></tr>
+        </tbody></table>
+      <button class="btn btn-primary mt-3">+ 新建规则</button>
+    </div></div></div>
+
+    <div id="set-token" class="hidden"><div class="card"><div class="card-body">
+      <div class="form-row"><label class="form-label">全局日 Token 上限</label><input class="input" value="10000000" style="width:200px"><span class="text-gray text-sm">tokens/天</span></div>
+      <div class="form-row"><label class="form-label">单任务上限</label><input class="input" value="500000" style="width:200px"></div>
+      <div class="form-row"><label class="form-label">超限策略</label><select class="select" style="width:240px"><option>排队等待次日</option><option>拒绝新任务</option><option>仅告警不限制</option></select></div>
+      <button class="btn btn-primary">保存</button>
+    </div></div></div>
+
+    <div id="set-sys" class="hidden"><div class="card"><div class="card-body">
+      <div class="form-row"><label class="form-label">会话有效期</label><input class="input" value="8" style="width:100px"><span class="text-gray text-sm">小时</span></div>
+      <div class="form-row"><label class="form-label">登录失败锁定</label><input class="input" value="5" style="width:100px"><span class="text-gray text-sm">次后锁定15分钟</span></div>
+      <div class="form-row"><label class="form-label">操作日志保留</label><input class="input" value="180" style="width:100px"><span class="text-gray text-sm">天</span></div>
+      <div class="form-row"><label class="form-label">系统日志保留</label><input class="input" value="30" style="width:100px"><span class="text-gray text-sm">天</span></div>
+      <div class="form-row"><label class="form-label">默认最大文件数</label><input class="input" value="500" style="width:100px"></div>
+      <button class="btn btn-primary">保存</button>
+    </div></div></div>
+
+    <script>
+      function showSetTab(k){
+        document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+        event.target.classList.add('active');
+        ['llm','rule','token','sys'].forEach(x=>{const el=document.getElementById('set-'+x); if(el) el.classList.toggle('hidden', x!==k)});
+      }
+    <\/script>
+  `, [{hash:'#/settings',label:'基础设置'}]);
+}
+
+/* ============================================================
+   启动
+   ============================================================ */
+router();
+</script>
+</body>
+</html>
