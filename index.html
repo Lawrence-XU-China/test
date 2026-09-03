@@ -783,7 +783,7 @@ function pageProjectSettings(pid){
     <td class="text-gray text-sm truncate">${r.url}</td>
     <td>${r.owner}</td>
     <td class="text-right"><button class="btn-link" onclick="go('#/repos/${r.id}/settings')">仓库权限</button></td>
-  </tr>`).join('');ttt
+  </tr>`).join('');
 
   return layout(`
     <div class="page-title">${p.name} · 管理配置</div>
